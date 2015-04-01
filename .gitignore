@@ -1,0 +1,8 @@
+# Ignore swap files
+*.swp
+
+# Ignore pyc
+*.pyc
+
+# Ignore virtualenv install
+virtualenv-*/
