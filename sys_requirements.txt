@@ -1,1 +1,9 @@
+// Generic requirements
 curl
+
+// Scrapy requirements
+libffi-dev (apt-get) 
+python-dev (apt-get)
+libssl-dev (apt-get)
+libxml-dev (apt-get)
+libxslt-dev (apt-get)

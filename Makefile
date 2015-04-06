@@ -7,3 +7,6 @@ venv_install:
 
 venv_update:
 	$(VENV_ACTIVATE) pip install -r requirements.txt
+
+venv_scrapy:
+	 $(VENV_ACTIVATE) pip install -r scrapy_requirements.txt
