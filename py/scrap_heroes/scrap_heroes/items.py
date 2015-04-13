@@ -13,3 +13,4 @@ class HeroesItem(scrapy.Item):
     description = scrapy.Field()
     french_name = scrapy.Field()
     slug_name = scrapy.Field()
+    role = scrapy.Field()

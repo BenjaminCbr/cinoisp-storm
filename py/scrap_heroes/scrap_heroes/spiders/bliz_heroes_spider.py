@@ -30,13 +30,14 @@ class BlizHeroesSpider(scrapy.Spider):
                 ), 
                 callback=self.parse_heroe
             )
-            break
 
     XPATH_LOCATIONS = {
         "french_name": '//div[contains(@class, "hero-info")]'
                      '//h1[contains(@class, "hero-identity__name")]/text()',
         "description": '//div[contains(@class, "hero-info")]'
                      '//div[contains(@class, "hero-description")]/text()',
+        "role": '//div[@id="hero-summary"]'
+                '//div[contains(@class, "hero-role") and contains(@class, "paragraph")]/text()'
     }
     
     def parse_heroe(self, response):
