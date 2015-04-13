@@ -9,5 +9,7 @@ import scrapy
 
 
 class HeroesItem(scrapy.Item):
-    core_name = scrapy.Field()
+
+    description = scrapy.Field()
     french_name = scrapy.Field()
+    slug_name = scrapy.Field()

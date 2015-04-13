@@ -24,3 +24,24 @@ class BlizHeroesSpider(scrapy.Spider):
                 name=hero_dict['name'],
                 slug=hero_dict['slug']
             ))
+            yield scrapy.Request("{base}{hero}/".format(
+                    base=self.start_urls[0],
+                    hero=hero_dict['slug'],
+                ), 
+                callback=self.parse_heroe
+            )
+            break
+
+    XPATH_LOCATIONS = {
+        "french_name": '//div[contains(@class, "hero-info")]'
+                     '//h1[contains(@class, "hero-identity__name")]/text()',
+        "description": '//div[contains(@class, "hero-info")]'
+                     '//div[contains(@class, "hero-description")]/text()',
+    }
+    
+    def parse_heroe(self, response):
+        heroes_item = HeroesItem()
+        heroes_item['slug_name'] = response.url.split("/")[-2]
+        for attr, xpath in self.XPATH_LOCATIONS.iteritems():
+            heroes_item[attr] = response.xpath(xpath).extract()[0]
+        yield heroes_item
