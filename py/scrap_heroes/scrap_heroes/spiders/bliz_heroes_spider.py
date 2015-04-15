@@ -41,8 +41,26 @@ class BlizHeroesSpider(scrapy.Spider):
     }
     
     def parse_heroe(self, response):
+        # Retrieving single values
         heroes_item = HeroesItem()
         heroes_item['slug_name'] = response.url.split("/")[-2]
         for attr, xpath in self.XPATH_LOCATIONS.iteritems():
             heroes_item[attr] = response.xpath(xpath).extract()[0]
+        # Retrieving skin values
+        heroes_item["skins"] = self.extract_skins(response)
+        heroes_item["subtitle"] = (skin["french_name"] for skin in heroes_item["skins"] if skin["main"]).next()
         yield heroes_item
+
+    def extract_skins(self, response):
+        skin_js = response.xpath('//script[contains(text(), "window.heroSkins")]/text()').extract()[0]
+        skins_regex = r"(?<=window.heroSkins = ).*](?=;)"
+        skin_json = json.loads(re.search(skins_regex, skin_js, re.DOTALL).group()) 
+        return [
+            {
+                "en_name": skin["enName"],
+                "french_name": skin["name"],
+                "main": i == 0,
+                "slug_name": skin["slug"],
+            }
+            for i, skin in enumerate(skin_json)
+        ]
