@@ -10,6 +10,7 @@ from scrap_heroes.items import HeroesItem
 class BlizHeroesSpider(scrapy.Spider):
 
     name = "bliz_heroes"
+    BASE_URL = "http://eu.battle.net"
     start_urls = [
         "http://eu.battle.net/heroes/fr/heroes/"
     ]
@@ -18,17 +19,22 @@ class BlizHeroesSpider(scrapy.Spider):
         heroes_js = response.xpath('//script[contains(text(), "window.heroes")]/text()').extract()[0]
         heroes_regex = r"(?<=window.heroes = ).*(?=;)"
         heroes_json = json.loads(re.search(heroes_regex, heroes_js).group())
-        
+
         for hero_dict in heroes_json:
             self.log('Found Hero {name}, slug is {slug}'.format(
                 name=hero_dict['name'],
                 slug=hero_dict['slug']
             ))
+            meta = {
+                "franchise": hero_dict["franchise"],
+                "type": hero_dict["type"]["slug"]
+            }
             yield scrapy.Request("{base}{hero}/".format(
                     base=self.start_urls[0],
                     hero=hero_dict['slug'],
-                ), 
-                callback=self.parse_heroe
+                ),
+                callback=self.parse_heroe,
+                meta=meta
             )
 
     XPATH_LOCATIONS = {
@@ -39,22 +45,26 @@ class BlizHeroesSpider(scrapy.Spider):
         "role": '//div[@id="hero-summary"]'
                 '//div[contains(@class, "hero-role") and contains(@class, "paragraph")]/text()'
     }
-    
+
     def parse_heroe(self, response):
         # Retrieving single values
         heroes_item = HeroesItem()
         heroes_item['slug_name'] = response.url.split("/")[-2]
+        heroes_item['franchise'] = response.meta['franchise']
+        heroes_item['type_'] = response.meta['type']
         for attr, xpath in self.XPATH_LOCATIONS.iteritems():
             heroes_item[attr] = response.xpath(xpath).extract()[0]
         # Retrieving skin values
         heroes_item["skins"] = self.extract_skins(response)
         heroes_item["subtitle"] = (skin["french_name"] for skin in heroes_item["skins"] if skin["main"]).next()
+        # Retrieving abilities
+        heroes_item["abilities"] = self.extract_abilities(response)
         yield heroes_item
 
     def extract_skins(self, response):
         skin_js = response.xpath('//script[contains(text(), "window.heroSkins")]/text()').extract()[0]
         skins_regex = r"(?<=window.heroSkins = ).*](?=;)"
-        skin_json = json.loads(re.search(skins_regex, skin_js, re.DOTALL).group()) 
+        skin_json = json.loads(re.search(skins_regex, skin_js, re.DOTALL).group())
         return [
             {
                 "en_name": skin["enName"],
@@ -64,3 +74,34 @@ class BlizHeroesSpider(scrapy.Spider):
             }
             for i, skin in enumerate(skin_json)
         ]
+
+    def extract_abilities(self, response):
+        ability_dict = {
+            "regular": [],
+            "heroic": []
+        }
+        # 1. Heroic abilities
+        heroic_xpath = response.xpath(
+            '//div[contains(@class, "heroic-abilities-container")]'
+            '//div[contains(@class, "ability-box__icon-wrapper")]'
+        )
+
+        for ability in heroic_xpath:
+            ability_dict["heroic"].append({
+                "slug": None,
+                "fr_name": ability.xpath('.//span[@class="ability-tooltip__title"]/text()').extract()[0],
+                "description": ability.xpath('.//span[@class="ability-tooltip__description"]/text()').extract()[0],
+                "picture_link": self.BASE_URL + ability.xpath('.//img[contains(@class, "ability-box__icon")]/@src').extract()[0],
+            })
+        # 2. Regular abilities
+        regular_ability_xpath = response.xpath(
+            '//div[@class="abilities-summary"]//div[contains(@class, "ability-box__icon-wrapper")]'
+        )
+        for ability in regular_ability_xpath:
+            ability_dict["regular"].append({
+                "slug": None,
+                "fr_name": ability.xpath('.//span[@class="ability-tooltip__title"]/text()').extract()[0],
+                "description": ability.xpath('.//span[@class="ability-tooltip__description"]/text()').extract()[0],
+                "picture_link": self.BASE_URL + ability.xpath('.//img[contains(@class, "ability-box__icon")]/@src').extract()[0],
+            })
+        return ability_dict

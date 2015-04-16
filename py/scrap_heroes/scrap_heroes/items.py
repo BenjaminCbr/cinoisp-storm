@@ -10,9 +10,12 @@ import scrapy
 
 class HeroesItem(scrapy.Item):
 
+    abilities = scrapy.Field()
     description = scrapy.Field()
+    franchise = scrapy.Field()
     french_name = scrapy.Field()
     skins = scrapy.Field()
     slug_name = scrapy.Field()
     subtitle = scrapy.Field()
     role = scrapy.Field()
+    type_ = scrapy.Field()
