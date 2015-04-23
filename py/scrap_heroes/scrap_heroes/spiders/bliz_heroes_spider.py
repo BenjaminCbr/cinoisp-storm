@@ -57,7 +57,7 @@ class BlizHeroesSpider(scrapy.Spider):
         heroes_item["skins"] = self.extract_skins(response)
         heroes_item["subtitle"] = (skin["french_name"] for skin in heroes_item["skins"] if skin["main"]).next()
         # Retrieving abilities
-        heroes_item["abilities"] = self.extract_abilities(response)
+        heroes_item["abilities"] = self.extract_abilities(response, heroes_item['slug_name'])
         yield heroes_item
 
     def extract_skins(self, response):
@@ -74,7 +74,7 @@ class BlizHeroesSpider(scrapy.Spider):
             for i, skin in enumerate(skin_json)
         ]
 
-    def extract_abilities(self, response):
+    def extract_abilities(self, response, hero_slug):
         ability_dict = {
             "regular": [],
             "heroic": [],
@@ -85,34 +85,33 @@ class BlizHeroesSpider(scrapy.Spider):
             '//div[contains(@class, "heroic-abilities-container")]'
             '//div[contains(@class, "ability-box__icon-wrapper")]'
         )
+        for ability_xp in heroic_xpath:
+            ability_dict["heroic"].append(self.single_ability_extractor(ability_xp, hero_slug))
 
-        for ability in heroic_xpath:
-            ability_dict["heroic"].append({
-                "slug": None,
-                "fr_name": ability.xpath('.//span[@class="ability-tooltip__title"]/text()').extract()[0],
-                "description": ability.xpath('.//span[@class="ability-tooltip__description"]/text()').extract()[0],
-                "picture_link": self.BASE_URL + ability.xpath('.//img[contains(@class, "ability-box__icon")]/@src').extract()[0],
-            })
         # 2. Regular abilities
         regular_ability_xpath = response.xpath(
             '//div[@class="abilities-summary"]//div[contains(@class, "ability-box__icon-wrapper")]'
         )
-        for ability in regular_ability_xpath:
-            ability_dict["regular"].append({
-                "slug": None,
-                "fr_name": ability.xpath('.//span[@class="ability-tooltip__title"]/text()').extract()[0],
-                "description": ability.xpath('.//span[@class="ability-tooltip__description"]/text()').extract()[0],
-                "picture_link": self.BASE_URL + ability.xpath('.//img[contains(@class, "ability-box__icon")]/@src').extract()[0],
-            })
+        for ability_xp in regular_ability_xpath:
+            ability_dict["regular"].append(self.single_ability_extractor(ability_xp, hero_slug))
+
         # 3. Hero trait
         trait_ability_xpath = response.xpath(
             '//div[@class="abilities-summary"]//div[contains(@class, "trait-icon-container")]'
         )
-        ability_dict["trait"] = [{
-            "slug": None,
-            "description": trait_ability_xpath.xpath('.//span[contains(@class, "ability-tooltip__description")]/text()').extract()[0],
-            "fr_name": trait_ability_xpath.xpath('.//span[contains(@class, "ability-tooltip__title")]/text()').extract()[0],
-            "picture_link": self.BASE_URL + trait_ability_xpath.xpath(".//img/@src").extract()[0],
-        }]
+        ability_dict["trait"] = self.single_ability_extractor(trait_ability_xpath, hero_slug)
 
         return ability_dict
+
+    def single_ability_extractor(self, current_xpath, hero_slug):
+        """
+        :param current_xpath:       The current xpath containing an ability
+                                    information
+        """
+        relative_picture_link = current_xpath.xpath(".//img/@src").extract()[0]
+        return {
+            "slug": re.search(r"(?<={}_).+(?=.jpg)".format(hero_slug), relative_picture_link).group(),
+            "description": current_xpath.xpath('.//span[contains(@class, "ability-tooltip__description")]/text()').extract()[0],
+            "fr_name": current_xpath.xpath('.//span[contains(@class, "ability-tooltip__title")]/text()').extract()[0],
+            "picture_link": self.BASE_URL + relative_picture_link,
+        }
