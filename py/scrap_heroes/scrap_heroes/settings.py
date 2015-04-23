@@ -8,6 +8,8 @@
 #     http://doc.scrapy.org/en/latest/topics/settings.html
 #
 
+from local_settings import *
+
 BOT_NAME = 'scrap_heroes'
 
 SPIDER_MODULES = ['scrap_heroes.spiders']

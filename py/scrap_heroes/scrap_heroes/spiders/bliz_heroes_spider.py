@@ -5,15 +5,14 @@ import re
 import scrapy
 
 from scrap_heroes.items import HeroesItem
+import scrap_heroes.settings as settings
 
 
 class BlizHeroesSpider(scrapy.Spider):
 
     name = "bliz_heroes"
-    BASE_URL = "http://eu.battle.net"
-    start_urls = [
-        "http://eu.battle.net/heroes/fr/heroes/"
-    ]
+    BASE_URL = settings.BLIZ["BASE_URL"]
+    start_urls = settings.BLIZ["START_URLS"]
 
     def parse(self, response):
         heroes_js = response.xpath('//script[contains(text(), "window.heroes")]/text()').extract()[0]
