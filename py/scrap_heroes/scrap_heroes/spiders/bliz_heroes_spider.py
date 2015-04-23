@@ -78,7 +78,8 @@ class BlizHeroesSpider(scrapy.Spider):
     def extract_abilities(self, response):
         ability_dict = {
             "regular": [],
-            "heroic": []
+            "heroic": [],
+            "trait": [],
         }
         # 1. Heroic abilities
         heroic_xpath = response.xpath(
@@ -104,4 +105,15 @@ class BlizHeroesSpider(scrapy.Spider):
                 "description": ability.xpath('.//span[@class="ability-tooltip__description"]/text()').extract()[0],
                 "picture_link": self.BASE_URL + ability.xpath('.//img[contains(@class, "ability-box__icon")]/@src').extract()[0],
             })
+        # 3. Hero trait
+        trait_ability_xpath = response.xpath(
+            '//div[@class="abilities-summary"]//div[contains(@class, "trait-icon-container")]'
+        )
+        ability_dict["trait"] = [{
+            "slug": None,
+            "description": trait_ability_xpath.xpath('.//span[contains(@class, "ability-tooltip__description")]/text()').extract()[0],
+            "fr_name": trait_ability_xpath.xpath('.//span[contains(@class, "ability-tooltip__title")]/text()').extract()[0],
+            "picture_link": self.BASE_URL + trait_ability_xpath.xpath(".//img/@src").extract()[0],
+        }]
+
         return ability_dict
