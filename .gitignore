@@ -6,3 +6,9 @@
 
 # Ignore virtualenv install
 psi_venv
+
+# Ignore temp
+temp
+
+# Ignore local_settings
+*local_settings.py
