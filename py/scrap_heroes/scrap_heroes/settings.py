@@ -17,3 +17,7 @@ NEWSPIDER_MODULE = 'scrap_heroes.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'scrap_heroes (+http://www.yourdomain.com)'
+
+ITEM_PIPELINES = {
+    'scrap_heroes.pipelines.HeroesToMongoPipeline': 100
+}
