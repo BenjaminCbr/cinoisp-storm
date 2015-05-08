@@ -34,7 +34,34 @@ class TalentHeroesSpider(scrapy.Spider):
                 "mongo_hero": mongo_hero,
             }
             yield scrapy.Request(hero_url, callback=self.parse_hero, meta=meta)
-            break
 
     def parse_hero(self, response):
-        pass
+        talent_heroes_item = HeroTalentItem()
+        talent_heroes_item["talents"] = self.get_talents(response)
+        yield talent_heroes_item
+
+    def get_talents(self, response):
+        talents = []
+        talent_tree = response.xpath('//div[@class="abre_talents_wrapper"]')
+        for talent_level in talent_tree.xpath('.//div[@class="niveau_wrapper"]'):
+            talents.append(self.parse_talent_level(talent_level))
+        return talents
+
+    def parse_talent_level(self, talent_level):
+        level_number = talent_level.xpath('.//div[@class="niveau"]/span/text()').extract()[0]
+        talent_list = []
+        for talent in talent_level.xpath('./div[@class="talent"]'):
+            talent_list.append(self.parse_single_talent(talent))
+        return {
+            "level": level_number,
+            "talent_list": talent_list,
+        }
+
+    def parse_single_talent(self, talent):
+        bound_ability = talent.xpath('./input[@class="touche"]/@value').extract()[0]
+        return {
+            "french_name": talent.xpath('./input[@class="nom_vf"]/@value').extract()[0],
+            "description": talent.xpath('./input[@class="description"]/@value').extract()[0],
+            "cooldown": talent.xpath('./input[@class="cooldown"]/@value').extract()[0],
+            "bound_ability": bound_ability if bound_ability != "0" else None,
+        }

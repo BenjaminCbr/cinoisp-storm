@@ -21,4 +21,4 @@ class HeroesItem(scrapy.Item):
     type_ = scrapy.Field()
 
 class HeroTalentItem(scrapy.Item):
-    pass
+    talents = scrapy.Field()

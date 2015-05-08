@@ -29,6 +29,8 @@ class HeroesToMongoPipeline(object):
         )
 
     def process_item(self, item, spider):
+        if spider.name != "bliz_heroes":
+            return item
         official_slug = item["slug_name"]
 
         tentative_doc = Hero.objects(official_slug=official_slug).first()
