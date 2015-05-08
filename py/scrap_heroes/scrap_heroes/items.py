@@ -19,3 +19,6 @@ class HeroesItem(scrapy.Item):
     subtitle = scrapy.Field()
     role = scrapy.Field()
     type_ = scrapy.Field()
+
+class HeroTalentItem(scrapy.Item):
+    pass
