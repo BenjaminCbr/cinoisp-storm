@@ -21,3 +21,6 @@ NEWSPIDER_MODULE = 'scrap_heroes.spiders'
 ITEM_PIPELINES = {
     'scrap_heroes.pipelines.HeroesToMongoPipeline': 100
 }
+
+# Be nice with crawled websites, and throttling our requests
+AUTOTHROTTLE_ENABLED = True
