@@ -3,6 +3,7 @@ This module contain utils class liable to be used by any spider
 """
 from __future__ import unicode_literals
 import logging
+import re
 
 
 def compare_dicts(dict_a, dict_b):
@@ -31,3 +32,6 @@ def compare_dicts(dict_a, dict_b):
             comparison = False
 
     return comparison
+
+def clean_name(input_string):
+    return re.sub(r"\W", "", input_string).lower()
