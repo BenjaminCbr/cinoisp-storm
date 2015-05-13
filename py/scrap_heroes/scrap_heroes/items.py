@@ -22,3 +22,4 @@ class HeroesItem(scrapy.Item):
 
 class HeroTalentItem(scrapy.Item):
     talents = scrapy.Field()
+    slug_name = scrapy.Field()

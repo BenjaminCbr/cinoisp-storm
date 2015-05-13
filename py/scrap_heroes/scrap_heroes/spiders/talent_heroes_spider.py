@@ -41,6 +41,7 @@ class TalentHeroesSpider(scrapy.Spider):
     def parse_hero(self, response):
         talent_heroes_item = HeroTalentItem()
         talent_heroes_item["talents"], talent_jpg_queries = self.get_talents(response)
+        talent_heroes_item["slug_name"] = response.meta["mongo_hero"].official_slug
         for jpg_request in talent_jpg_queries:
             yield scrapy.Request(jpg_request, callback=self.download_talent_picture)
         yield talent_heroes_item
