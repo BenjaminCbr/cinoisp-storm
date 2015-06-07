@@ -43,3 +43,4 @@ class HeroesToMongoPipeline(object):
         tentative_doc.data["blibli"] = item
         tentative_doc.french_name = item["french_name"]
         tentative_doc.save()
+        return item

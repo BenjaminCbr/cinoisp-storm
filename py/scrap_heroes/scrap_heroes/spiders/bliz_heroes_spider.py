@@ -99,7 +99,7 @@ class BlizHeroesSpider(scrapy.Spider):
         trait_ability_xpath = response.xpath(
             '//div[@class="abilities-summary"]//div[contains(@class, "trait-icon-container")]'
         )
-        ability_dict["trait"] = self.single_ability_extractor(trait_ability_xpath, hero_slug)
+        ability_dict["trait"].append(self.single_ability_extractor(trait_ability_xpath, hero_slug))
 
         return ability_dict
 
