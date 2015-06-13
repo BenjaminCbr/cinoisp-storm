@@ -48,7 +48,7 @@ class HeroesToMongoPipeline(object):
         else:
             tentative_doc = Hero(official_slug=official_slug)
             data_to_save = dict(item)
-        tentative_doc.data = data_to_save
+        tentative_doc.data.update(data_to_save)
 
         if spider.name == "bliz_heroes":  # Adding French Name if we come from BliBli
             tentative_doc.french_name = item["french_name"]
