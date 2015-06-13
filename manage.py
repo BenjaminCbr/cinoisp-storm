@@ -3,7 +3,7 @@ import os
 import sys
 
 # Adding py librairy to sys path
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "py"))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "py", "scrap_heroes"))
 
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "py.psionic_storm.settings")

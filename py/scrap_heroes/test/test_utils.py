@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.test import TestCase
 
-from scrap_heroes.utils import partial_dict_equals
+from ..utils import partial_dict_equals
 
 
 class DictUtilsTest(TestCase):
