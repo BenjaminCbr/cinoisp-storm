@@ -2,8 +2,10 @@ from __future__ import unicode_literals
 
 import logging
 
+from datetime import datetime
 from fuzzywuzzy import fuzz
 
+import json
 import mongoengine
 import scrapy
 
@@ -17,6 +19,7 @@ class Hero(mongoengine.Document):
 
     meta = {
         "db_alias": "heroes",
+        "allow_inheritance": True,
     }
 
     data = mongoengine.DictField()
@@ -51,8 +54,8 @@ class Hero(mongoengine.Document):
             )
             score = fuzz.partial_ratio(cleaned_french_name, clean_name(hero_original_slug))
             if score <= cls.MIN_FUZZY_RATIO:
-                logging.warning("Score was {}, discarding as too low. Hero might be missing from"
-                                " blibli site".format(score))
+                logging.warning("Score was {}, discarding as too low. Hero might be missing from "
+                                "blibli site".format(score))
                 return None
             hero_doc = cls.objects(id=name_id_dict[hero_original_slug]).get()
             scrapy.log.msg(
@@ -61,3 +64,22 @@ class Hero(mongoengine.Document):
                 level=scrapy.log.INFO
             )
         return hero_doc
+
+    def archive_hero(self, hero_doc):
+        """
+        Archives the hero in another collection, adding an archived_at timestamp
+        """
+        archived_dict = json.loads(hero_doc.to_json())
+        archived_doc = ArchivedHero(**archived_dict)
+        archived_doc.archived_at = datetime.now()
+        archived_doc.save()
+        return archived_doc
+
+class ArchivedHero(Hero):
+    """
+    Class where we store the past heroes
+    """
+    meta = {
+        "db_alias": "heroes"
+    }
+    archived_at = mongoengine.DateTimeField()
