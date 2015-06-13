@@ -29,18 +29,29 @@ class HeroesToMongoPipeline(object):
         )
 
     def process_item(self, item, spider):
-        if spider.name != "bliz_heroes":
-            return item
+        """
+        An item must have an associeted slug_name
+        """
         official_slug = item["slug_name"]
 
         tentative_doc = Hero.objects(official_slug=official_slug).first()
         if tentative_doc:
             logging.info("Hero with slug {} already exist in database".format(official_slug))
-            if not utils.compare_dicts(tentative_doc.data.get("blibli", {}), dict(item)):
-                logging.info("Items are unequal, aborting save (for now)")
+            if not utils.partial_dict_equals(dict(item), tentative_doc.data):
+                logging.info(
+                    "Items has key in tentative_doc.data, that are different from mongo object."
+                    "aborting save (for now)"
+                )
+            data_to_save = {
+                key: value for key, value in item.iteritems() if key not in tentative_doc.data
+            }
         else:
             tentative_doc = Hero(official_slug=official_slug)
-        tentative_doc.data["blibli"] = item
-        tentative_doc.french_name = item["french_name"]
+            data_to_save = dict(item)
+        tentative_doc.data = data_to_save
+
+        if spider.name == "bliz_heroes":  # Adding French Name if we come from BliBli
+            tentative_doc.french_name = item["french_name"]
+
         tentative_doc.save()
         return item
