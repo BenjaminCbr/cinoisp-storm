@@ -4,10 +4,11 @@ from datetime import datetime
 
 import logging
 import os
+import re
 import scrapy
 
 from documents.hero import Hero
-from scrap_heroes.items import HeroTalentItem, PriceItem
+from scrap_heroes.items import HeroStatsItem, HeroTalentItem, PriceItem
 
 from scrap_heroes import settings
 
@@ -49,6 +50,9 @@ class TalentHeroesSpider(scrapy.Spider):
         price_item["slug_name"] = response.meta["mongo_hero"].official_slug
         price_item["price"] = self.parse_price(response)
         yield price_item
+        stat_item = self.parse_stats(response)
+        stat_item["slug_name"] = response.meta["mongo_hero"].official_slug
+        yield stat_item
 
 
     # Talent part
@@ -118,3 +122,54 @@ class TalentHeroesSpider(scrapy.Spider):
                 '//div[@id="informations-heros"]//strong[text()="Prix"]/../span[contains(text(), "\u20ac")]/text()'
             ).extract()[0].replace("\u20ac", "")),
         }
+
+    def parse_stats(self, response):
+        stat_item = HeroStatsItem()
+        left_stats_panel = '//h4[text()="Statistiques"]/following-sibling::div/div/text()'
+        right_stats_panel = '//h4[text()="Statistiques"]/following-sibling::div/div[2]/text()'
+        stat_item["level_1"] = {
+            "health": int(re.search(
+                r"\d+", response.xpath(left_stats_panel).extract()[1]
+            ).group()),
+            "regen_health": float(re.search(
+                r"[\d\.]+", response.xpath(left_stats_panel).extract()[3]
+            ).group()),
+            "mana": int(re.search(
+                r"\d+", response.xpath(left_stats_panel).extract()[5]
+            ).group()),
+            "regen_mana": float(re.search(
+                r"[\d\.]+", response.xpath(left_stats_panel).extract()[7]
+            ).group()),
+            "damage": int(re.search(
+                r"[\d\.]+", response.xpath(right_stats_panel).extract()[1]
+            ).group()),
+            "attack_speed": float(re.search(
+                r"[\d\.]+", response.xpath(right_stats_panel).extract()[3]
+            ).group()),
+            "attack_range": float(re.search(
+                r"[\d\.]+", response.xpath(right_stats_panel).extract()[5]
+            ).group()),
+        }
+
+        left_stats_panel_per_level = ('//h4[text()="Statistiques"]/following-sibling::'
+                                      'div/div/span[@class="par_niveau"]/text()')
+        right_stats_panel_per_level = ('//h4[text()="Statistiques"]/following-sibling::'
+                                      'div/div[2]/span[@class="par_niveau"]/text()')
+        stat_item["per_level"] = {
+            "health": int(re.search(
+                r"\d+", response.xpath(left_stats_panel_per_level
+            ).extract()[0]).group()),
+            "regen_health": float(re.search(
+                r"[\d\.]+", response.xpath(left_stats_panel_per_level
+            ).extract()[1]).group()),
+            "mana": int(re.search(
+                r"\d+", response.xpath(left_stats_panel_per_level
+            ).extract()[2]).group()),
+            "regen_mana": float(re.search(
+                r"[\d\.]+", response.xpath(left_stats_panel_per_level
+            ).extract()[3]).group()),
+            "damage": float(re.search(
+                r"[\d\.]+", response.xpath(right_stats_panel_per_level
+            ).extract()[0]).group()),
+        }
+        return stat_item

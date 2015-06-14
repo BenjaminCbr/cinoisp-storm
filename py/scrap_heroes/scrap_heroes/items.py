@@ -27,3 +27,8 @@ class HeroTalentItem(scrapy.Item):
 class PriceItem(scrapy.Item):
     slug_name = scrapy.Field()
     price = scrapy.Field()
+
+class HeroStatsItem(scrapy.Item):
+    slug_name = scrapy.Field()
+    level_1 = scrapy.Field()
+    per_level = scrapy.Field()
