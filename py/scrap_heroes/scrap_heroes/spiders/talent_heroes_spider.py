@@ -7,7 +7,7 @@ import os
 import scrapy
 
 from documents.hero import Hero
-from scrap_heroes.items import HeroTalentItem
+from scrap_heroes.items import HeroTalentItem, PriceItem
 
 from scrap_heroes import settings
 
@@ -45,6 +45,13 @@ class TalentHeroesSpider(scrapy.Spider):
         for jpg_request in talent_jpg_queries:
             yield scrapy.Request(jpg_request, callback=self.download_talent_picture)
         yield talent_heroes_item
+        price_item = PriceItem()
+        price_item["slug_name"] = response.meta["mongo_hero"].official_slug
+        price_item["price"] = self.parse_price(response)
+        yield price_item
+
+
+    # Talent part
 
     def get_talents(self, response):
         talents = []
@@ -99,3 +106,15 @@ class TalentHeroesSpider(scrapy.Spider):
         self._initialize_static_folder_if_needed()
         with open(os.path.join(self._path_to_static, response.url.split("/")[-1]), "wb") as f:
             f.write(response.body)
+
+    # END talent part
+
+    def parse_price(self, response):
+        return {
+            "gold": int(response.xpath(
+                '//div[@id="informations-heros"]//span[@class="icone or"]/text()'
+            ).extract()[0].replace(" ", "")),
+            "euros":  float(response.xpath(
+                '//div[@id="informations-heros"]//strong[text()="Prix"]/../span[contains(text(), "\u20ac")]/text()'
+            ).extract()[0].replace("\u20ac", "")),
+        }

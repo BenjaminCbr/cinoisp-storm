@@ -23,3 +23,7 @@ class HeroesItem(scrapy.Item):
 class HeroTalentItem(scrapy.Item):
     talents = scrapy.Field()
     slug_name = scrapy.Field()
+
+class PriceItem(scrapy.Item):
+    slug_name = scrapy.Field()
+    price = scrapy.Field()
