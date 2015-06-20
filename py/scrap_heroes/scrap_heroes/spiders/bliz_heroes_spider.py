@@ -131,6 +131,6 @@ class BlizHeroesSpider(scrapy.Spider):
             "slug": re.search(r"(?<={}_).+(?=.jpg)".format(hero_slug), relative_picture_link).group(),
             "description": current_xpath.xpath('.//span[contains(@class, "ability-tooltip__description")]/text()').extract()[0],
             "fr_name": current_xpath.xpath('.//span[contains(@class, "ability-tooltip__title")]/text()').extract()[0],
-            "picture_name": relative_picture_link,
+            "picture_name": relative_picture_link.split("/")[-1],
             "picture_request": picture_request,
         }
