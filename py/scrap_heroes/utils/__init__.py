@@ -2,7 +2,11 @@
 This module contain utils class liable to be used by any spider
 """
 from __future__ import unicode_literals
+
+from datetime import datetime
+
 import logging
+import os
 import re
 
 
@@ -50,3 +54,22 @@ def partial_dict_equals(small_dict, big_dict):
 
 def clean_name(input_string):
     return re.sub(r"\W", "", input_string).lower()
+
+# Helper part to download pictures
+
+
+class FileDownloader(object):
+
+    def __init__(self, name):
+        self._path_to_static = os.path.join(
+            "..", "..", "temp", name, datetime.now().strftime("%B_%d__%H_%M")
+        )
+        self._initialize_static_folder_if_needed()
+
+    def _initialize_static_folder_if_needed(self):
+        if not os.path.exists(self._path_to_static):
+            os.makedirs(self._path_to_static)
+
+    def download_talent_picture(self, response):
+        with open(os.path.join(self._path_to_static, response.url.split("/")[-1]), "wb") as f:
+            f.write(response.body)
