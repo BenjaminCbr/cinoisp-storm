@@ -42,8 +42,12 @@ class HeroesToMongoPipeline(object):
                     "Items has key in tentative_doc.data, that are different from mongo object."
                     "aborting save (for now)"
                 )
+            # Below, data to save include all keys not found in tentative_doc
+            # AND values that are different
             data_to_save = {
-                key: value for key, value in item.iteritems() if key not in tentative_doc.data
+                key: value
+                for key, value in item.iteritems()
+                    if key not in tentative_doc.data or value != tentative_doc.data[key]
             }
         else:
             tentative_doc = Hero(official_slug=official_slug)
