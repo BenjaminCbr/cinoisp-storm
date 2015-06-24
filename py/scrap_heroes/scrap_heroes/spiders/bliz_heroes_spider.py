@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import itertools
 import json
 import re
 import scrapy
@@ -15,7 +16,10 @@ class BlizHeroesSpider(scrapy.Spider):
     BASE_URL = settings.BLIZ["BASE_URL"]
     start_urls = settings.BLIZ["START_URLS"]
 
-    FILE_DOWNLOADER = FileDownloader(name)
+    FILE_DOWNLOADERS = {
+        "abilities": FileDownloader(name + "_abilities"),
+        "skins": FileDownloader(name + "_skins"),
+    }
 
     def parse(self, response):
         heroes_js = response.xpath('//script[contains(text(), "window.heroes")]/text()').extract()[0]
@@ -57,29 +61,38 @@ class BlizHeroesSpider(scrapy.Spider):
         for attr, xpath in self.XPATH_LOCATIONS.iteritems():
             heroes_item[attr] = response.xpath(xpath).extract()[0]
         # Retrieving skin values
-        heroes_item["skins"] = self.extract_skins(response)
+        heroes_item["skins"], skin_dl_requests = self.extract_skins(response)
         heroes_item["subtitle"] = (skin["french_name"] for skin in heroes_item["skins"] if skin["main"]).next()
         # Retrieving abilities
-        heroes_item["abilities"], download_requests = self.extract_abilities(
+        heroes_item["abilities"], abilities_dl_requests = self.extract_abilities(
             response, heroes_item['slug_name']
         )
         yield heroes_item
-        for rq in download_requests:
+        for rq in itertools.chain(abilities_dl_requests, skin_dl_requests):
             yield rq
 
     def extract_skins(self, response):
         skin_js = response.xpath('//script[contains(text(), "window.heroSkins")]/text()').extract()[0]
         skins_regex = r"(?<=window.heroSkins = ).*](?=;)"
         skin_json = json.loads(re.search(skins_regex, skin_js, re.DOTALL).group())
-        return [
-            {
+        skins_extracted = []
+        skins_picture_requests = []
+        for i, skin in enumerate(skin_json):
+            url_to_picture = settings.BLIZ["SKIN_URL_TEMPLATE"].format(skin_slug=skin["slug"])
+            skins_extracted.append({
                 "en_name": skin["enName"],
                 "french_name": skin["name"],
                 "main": i == 0,
                 "slug_name": skin["slug"],
-            }
-            for i, skin in enumerate(skin_json)
-        ]
+                "picture_name": url_to_picture.split("/")[-1],
+            })
+            skins_picture_requests.append(
+                scrapy.Request(
+                    url_to_picture,
+                    callback=self.FILE_DOWNLOADERS["skins"].download_talent_picture
+                )
+            )
+        return skins_extracted, skins_picture_requests
 
     def extract_abilities(self, response, hero_slug):
         ability_dict = {
@@ -125,7 +138,7 @@ class BlizHeroesSpider(scrapy.Spider):
         relative_picture_link = current_xpath.xpath(".//img/@src").extract()[0]
         picture_request = scrapy.Request(
             self.BASE_URL + relative_picture_link,
-            callback=self.FILE_DOWNLOADER.download_talent_picture
+            callback=self.FILE_DOWNLOADERS["abilities"].download_talent_picture
         )
         return {
             "slug": re.search(r"(?<={}_).+(?=.jpg)".format(hero_slug), relative_picture_link).group(),
