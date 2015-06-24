@@ -35,7 +35,8 @@ class HeroTest(TestCase):
 
     def test_archive_hero(self):
         hero = Hero(official_slug=self.TEST_SLUG, data={"a": "yolo", "b": "ok"})
-        archived_hero = hero.archive_hero(hero)
+        hero.save()
+        archived_hero = hero.archive_hero()
         self.assertEqual(1, ArchivedHero.objects(official_slug=self.TEST_SLUG).count())
         self.assertIsInstance(archived_hero, ArchivedHero)
         self.assertIsNotNone(archived_hero.id)

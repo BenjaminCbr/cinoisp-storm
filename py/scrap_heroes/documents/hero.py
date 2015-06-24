@@ -65,11 +65,12 @@ class Hero(mongoengine.Document):
             )
         return hero_doc
 
-    def archive_hero(self, hero_doc):
+    def archive_hero(self):
         """
         Archives the hero in another collection, adding an archived_at timestamp
         """
-        archived_dict = json.loads(hero_doc.to_json())
+        archived_dict = json.loads(self.to_json())
+        del archived_dict["_id"]
         archived_doc = ArchivedHero(**archived_dict)
         archived_doc.archived_at = datetime.now()
         archived_doc.save()

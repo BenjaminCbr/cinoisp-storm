@@ -40,8 +40,9 @@ class HeroesToMongoPipeline(object):
             if not utils.partial_dict_equals(dict(item), tentative_doc.data):
                 logging.info(
                     "Items has key in tentative_doc.data, that are different from mongo object."
-                    "aborting save (for now)"
+                    " We will save the former doc in another collection"
                 )
+                tentative_doc.archive_hero()
             # Below, data to save include all keys not found in tentative_doc
             # AND values that are different
             data_to_save = {
